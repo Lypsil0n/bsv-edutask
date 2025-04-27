@@ -7,7 +7,7 @@ def dao():
     dao_instance = DAO("user")
     yield dao_instance
 
-    dao_instance.collection.delete_one({'email': 'jane.doe@gmail.com'})
+    dao_instance.collection.delete_many({'email': 'jane.doe@gmail.com'})
 
 @pytest.mark.integration
 def test_create_valid(dao):
@@ -32,7 +32,15 @@ def test_create_invalid_misspelled(dao):
     with pytest.raises(WriteError):
         dao.create(data)
 
+@pytest.mark.integration
+def test_create_unique_email(dao):
+    data1 = [('firstName', 'Jane'), ('lastName', 'Doe'), ('email', 'jane.doe@gmail.com')]
+    obj1 = dao.create(data1)
+    assert obj1.get('email') == 'jane.doe@gmail.com'
 
+    data2 = [('firstName', 'John'), ('lastName', 'Smith'), ('email', 'jane.doe@gmail.com')]
 
+    with pytest.raises(WriteError):
+        dao.create(data2)
 
 
