@@ -4,10 +4,10 @@ from pymongo.errors import WriteError
 
 @pytest.fixture
 def dao():
-    dao_instance = DAO("user")
+    dao_instance = DAO("test_user")
     yield dao_instance
 
-    dao_instance.collection.delete_many({'email': 'jane.doe@gmail.com'})
+    dao_instance.collection.delete_many({})
 
 @pytest.mark.integration
 def test_create_valid(dao):
