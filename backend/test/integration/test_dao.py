@@ -1,13 +1,17 @@
 import pytest
 from src.util.dao import DAO
+import pymongo
 from pymongo.errors import WriteError
 
 @pytest.fixture
-def dao():
+def dao(monkeypatch):
+    monkeypatch.setenv("MONGO_URL", "mongodb://localhost:27017/test_edutask")
+
     dao_instance = DAO("test_user")
     yield dao_instance
 
     dao_instance.collection.delete_many({})
+    dao_instance.collection.drop()
 
 @pytest.mark.integration
 def test_create_valid(dao):
