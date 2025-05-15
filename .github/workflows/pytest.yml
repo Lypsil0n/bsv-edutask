@@ -27,4 +27,4 @@ jobs:
 
       - name: Unit tests
         run: |
-          python -m pytest -m unit
+          python -m pytest -m unit --disable-warnings
