@@ -9,44 +9,45 @@ describe('Checking task functionality', () => {
     let todo_title = 'Test todo item'
   
     before(() => {
-        cy.fixture('user.json')
-          .then((user) => {
+        cy.fixture('user.json').then((user) => {
             cy.request({
-              method: 'POST',
-              url: 'http://localhost:5000/users/create',
-              form: true,
-              body: user
+                method: 'POST',
+                url: 'http://localhost:5000/users/create',
+                form: true,
+                body: user
             }).then((response) => {
-              uid = response.body._id.$oid;
-              name = user.firstName + ' ' + user.lastName;
-              email = user.email;
+                uid = response.body._id.$oid;
+                name = user.firstName + ' ' + user.lastName;
+                email = user.email;
 
-              cy.visit('http://localhost:3000')
-              cy.contains('div', 'Email Address').type(email)
-                cy.get('form')
-                    .submit()
-        
-              cy.contains('div', 'Title')
-                .find('input[type=text]').type(task_title)
-              cy.contains('div', 'YouTube URL')
-                .find('input[type=text]').type(view_key)
-              cy.get('form')
-                .submit()
+                // Create the test task directly via backend
+              cy.request({
+                  method: 'POST',
+                  url: 'http://localhost:5000/tasks/create',
+                  form: true, 
+                  body: {
+                      title: task_title,
+                      description: '',
+                      userid: uid,
+                      url: view_key,
+                      todos: ''
+                  },
+                });
             });
-          });
-      });
-    
-  
+        });
+    });
+
     beforeEach(function () {
-      // enter the main main page
-      cy.visit('http://localhost:3000')
-      cy.contains('div', 'Email Address').type(email)
-        cy.get('form')
-            .submit()
+        // Log in through the UI to get the session/cookie
+        cy.visit('http://localhost:3000');
+        cy.contains('div', 'Email Address').type(email);
+        cy.get('form').submit();
 
-      cy.contains('div', task_title).click()
-
-    })
+        // Open the task popup
+        cy.contains('div', task_title).click();
+        
+        
+    });
   
     it('create new todo item', () => {
 
@@ -87,7 +88,7 @@ describe('Checking task functionality', () => {
         .should('be.disabled');
     });
 
-    it('change status of todo item', () => {
+    it('change status of todo item from unchecked to checked', () => {
       // Locate the checkbox for the todo item within the popup
       cy.contains('div.popup', task_title)
         .should('contain.text', task_title) 
@@ -105,7 +106,9 @@ describe('Checking task functionality', () => {
         .last()
         .find('span') 
         .should('have.class', 'checker checked');
+      });
 
+      it('change status of todo item from checked to unchecked', () => {
         cy.contains('div.popup', task_title)
         .should('contain.text', task_title) 
         .find('ul.todo-list')
