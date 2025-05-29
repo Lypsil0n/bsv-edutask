@@ -89,6 +89,24 @@ describe('Checking task functionality', () => {
     });
 
     it('change status of todo item from unchecked to checked', () => {
+
+      cy.request({
+        method: 'GET',
+        url: `http://localhost:5000/tasks/ofuser/${uid}`
+      }).then((response) => {
+        const task = response.body.find(t => t.title === task_title);
+        const todo = task.todos.find(t => t.description === todo_title);
+        const todoId = todo._id.$oid || todo._id;
+        cy.request({
+          method: 'PUT',
+          url: `http://localhost:5000/todos/byid/${todoId}`,
+          form: true,
+          body: {
+            data: JSON.stringify({ '$set': { done: false } })
+          }
+        });
+      });
+
       // Locate the checkbox for the todo item within the popup
       cy.contains('div.popup', task_title)
         .should('contain.text', task_title) 
@@ -104,11 +122,29 @@ describe('Checking task functionality', () => {
         .find('ul.todo-list')
         .find('li.todo-item')
         .last()
-        .find('span') 
-        .should('have.class', 'checker checked');
+        .find('.editable')
+        .should('have.css', 'text-decoration')
+        .and('match', /line-through/);
       });
 
       it('change status of todo item from checked to unchecked', () => {
+        cy.request({
+          method: 'GET',
+          url: `http://localhost:5000/tasks/ofuser/${uid}`
+        }).then((response) => {
+          const task = response.body.find(t => t.title === task_title);
+          const todo = task.todos.find(t => t.description === todo_title);
+          const todoId = todo._id.$oid || todo._id;
+          cy.request({
+            method: 'PUT',
+            url: `http://localhost:5000/todos/byid/${todoId}`,
+            form: true,
+            body: {
+              data: JSON.stringify({ '$set': { done: true } })
+            }
+          });
+        });
+
         cy.contains('div.popup', task_title)
         .should('contain.text', task_title) 
         .find('ul.todo-list')
@@ -119,12 +155,13 @@ describe('Checking task functionality', () => {
         .click() // Click the checkbox to change its status
   
       // Assert that the status of the todo item has changed
-      cy.contains('div.popup', task_title)
-        .find('ul.todo-list')
-        .find('li.todo-item')
-        .last()
-        .find('span') 
-        .should('have.class', 'checker unchecked');
+        cy.contains('div.popup', task_title)
+          .find('ul.todo-list')
+          .find('li.todo-item')
+          .last()
+          .find('.editable')
+          .should('have.css', 'text-decoration')
+          .and('not.match', /line-through/);
     });
 
     it('delete todo item', () => {
